@@ -1,14 +1,19 @@
 from typing import TypedDict
+from uuid import UUID, uuid4
+import uvicorn
 
 from fastapi import FastAPI
 from fastapi import APIRouter
 from fastapi import Request
 from fastapi import Response
 
-import uvicorn
-
+from app.repositories import presences
+from app.repositories import accounts
 from app.database import database
+from app import packets
 from app import settings
+from app import security
+
 
 app = FastAPI()
 
@@ -33,10 +38,6 @@ class Login_Data(TypedDict):
     location: int
     client_hash: str
     block_non_friend_pm: int
-
-
-# headers
-# {'cho-token': 'aiopdfjhw389rf3u289orhfj2389fj'}
 
 
 @app.on_event("startup")
@@ -75,12 +76,30 @@ async def handle_login(request: Request):
     if login_data is None:
         return
 
-    import struct
-    # sends user id as I32
-    # packet id = 5 (LOGIN REPLY)| length = 4 | user id = 1
-    # read case login reply handler for length
-    response_data = struct.pack("<HxIi", 5, 4, -1)
-    
+    account = await accounts.fetch_by_username(login_data["username"])
+
+    if not security.check_password(login_data["password_md5"],
+                                   account["password"].encode()):
+        return Response(
+                content=packets.login_reply_packet(-1),
+                headers={"cho-token": "no"}
+        )
+
+    presence = await presences.create(
+        presence_id=uuid4(),
+        user_id=account["user_id"],
+        username=account["username"],
+        timezone=1,
+        country=1,
+        permission=16,
+        longitude=0,
+        latitude=0,
+        rank=1,
+        gamemode=0,
+    )
+
+    response_data = packets.login_reply_packet(account["user_id"])
+
     token: str = "cho-token"
 
     return Response(
