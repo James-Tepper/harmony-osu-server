@@ -78,6 +78,8 @@ async def handle_login(request: Request):
 
     account = await accounts.fetch_by_username(login_data["username"])
 
+    assert account is not None
+
     if not security.check_password(login_data["password_md5"],
                                    account["password"].encode()):
         return Response(
@@ -100,14 +102,23 @@ async def handle_login(request: Request):
 
     response_data = packets.login_reply_packet(account["user_id"])
 
-    token: str = "cho-token"
+    response_data += packets.user_presence_packet(
+        user_id=presence["user_id"],
+        username=presence["username"],
+        timezone=presence["timezone"],
+        country=presence["country"],
+        permission=presence["permission"],
+        longitude=presence["longitude"],
+        latitude=presence["latitude"],
+        rank=presence["rank"],
+        gamemode=presence["gamemode"],
+    )
 
     return Response(
             content=response_data,
-            headers={"cho-token": token}
+            headers={"cho-token": str(presence["presence_id"])}
     )
 
-#cho-token
 
 
 async def handle_bancho_request(request: Request) -> Response:

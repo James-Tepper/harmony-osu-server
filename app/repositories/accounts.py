@@ -37,7 +37,7 @@ async def create(
 
 async def fetch_by_username(
     username: str
-) -> Account:
+) -> Account | None:
     account = await database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
@@ -48,13 +48,12 @@ async def fetch_by_username(
             "username": username,
         }
     )
-    assert account is not None
-    return cast(Account, account)
+    return cast(Account, account) if account is not None else None
 
 
 async def fetch_by_id(
     user_id: int
-) -> Account:
+) -> Account | None:
     account = await database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
@@ -66,5 +65,5 @@ async def fetch_by_id(
                 "user_id": user_id,
         }
     )
-    assert account is not None
-    return cast(Account, account)
+    return cast(Account, account) if account is not None else None
+

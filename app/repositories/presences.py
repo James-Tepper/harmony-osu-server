@@ -66,3 +66,19 @@ async def create(
     assert presence is not None
     return cast(Presence, presence)
 
+
+async def fetch_by_presence_id(
+    presence_id: UUID,
+) -> Presence | None:
+    presence = await database.fetch_one(
+        query=f"""
+            SELECT {READ_PARAMS}
+            FROM presences
+            WHERE presence_id = :presence_id
+        """,
+        values={
+            "presence_id": presence_id,
+        }
+    )
+
+    return cast(Presence, presence) if presence is not None else None
