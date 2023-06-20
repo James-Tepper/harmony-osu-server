@@ -5,3 +5,4 @@ pgdata/
 venv/
 nginx.conf
 notes.md
+.pre-commit-config.yml

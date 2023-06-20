@@ -50,7 +50,7 @@ async def create(
             RETURNING {READ_PARAMS}
         """,
         values={
-            "presence_id": presence_id,
+            "presence_id": str(presence_id),
             "user_id": user_id,
             "username": username,
             "timezone": timezone,
@@ -77,7 +77,7 @@ async def fetch_by_presence_id(
             WHERE presence_id = :presence_id
         """,
         values={
-            "presence_id": presence_id,
+            "presence_id": str(presence_id),
         }
     )
 

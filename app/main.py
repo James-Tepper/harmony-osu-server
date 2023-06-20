@@ -39,6 +39,18 @@ class Login_Data(TypedDict):
     client_hash: str
     block_non_friend_pm: int
 
+class Presence(TypedDict):
+    presence_id: UUID
+    user_id: int
+    username: str
+    timezone: int
+    country: int
+    permission: int
+    longitude: float
+    latitude: float
+    rank: int
+    gamemode: int
+
 
 @app.on_event("startup")
 async def on_startup():
@@ -87,15 +99,15 @@ async def handle_login(request: Request):
                 headers={"cho-token": "no"}
         )
 
-    presence = await presences.create(
+    presence: Presence = await presences.create(
         presence_id=uuid4(),
         user_id=account["user_id"],
         username=account["username"],
         timezone=1,
         country=1,
         permission=16,
-        longitude=0,
-        latitude=0,
+        longitude=0.0,
+        latitude=0.0,
         rank=1,
         gamemode=0,
     )
@@ -114,12 +126,14 @@ async def handle_login(request: Request):
         gamemode=presence["gamemode"],
     )
 
+
+    
     return Response(
             content=response_data,
             headers={"cho-token": str(presence["presence_id"])}
-    )
+        )
 
-
+    
 
 async def handle_bancho_request(request: Request) -> Response:
     ...

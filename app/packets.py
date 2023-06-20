@@ -52,14 +52,3 @@ def write_string(value: str) -> bytes:
 
     output += data
     return output
-
-        
-
-        # read 7 bits from length
-        # shift last one
-        # set to true if flag is 1
-        
-        
-    # read 7 bits
-    # add to length
-    # check 8th bit to keep going or not

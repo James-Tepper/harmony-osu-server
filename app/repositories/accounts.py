@@ -1,23 +1,28 @@
 from typing import TypedDict
 from typing import cast
 from app.database import database
+from datetime import datetime
 
 
 READ_PARAMS = """\
     user_id,
     username,
-    password
+    password,
+    created_at,
+    updated_at
 """
 
 class Account(TypedDict):
     user_id: int
     username: str
     password: str
+    created_at: datetime
+    updated_at: datetime
 
 
 async def create(
     username: str,
-    password: str
+    password: str,
 ) -> Account:
     account = await database.fetch_one(
         query=f"""
@@ -67,3 +72,14 @@ async def fetch_by_id(
     )
     return cast(Account, account) if account is not None else None
 
+
+async def fetch_many(
+    privileges: int | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> list[Account]:
+    accounts = database.fetch_all(
+        query=f"""
+                                  
+                                  
+                    """)
