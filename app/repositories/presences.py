@@ -1,8 +1,7 @@
-from typing import TypedDict
-from typing import cast
+from typing import TypedDict, cast
 from uuid import UUID
-from app.database import database
 
+from app.database import database
 
 READ_PARAMS = """\
     presence_id,
@@ -17,6 +16,7 @@ READ_PARAMS = """\
     gamemode
 """
 
+
 class Presence(TypedDict):
     presence_id: UUID
     user_id: int
@@ -28,6 +28,23 @@ class Presence(TypedDict):
     latitude: float
     rank: int
     gamemode: int
+
+
+class Action:
+    IDLE = 0
+    AFK = 1
+    PLAYING = 2
+    EDITING = 3
+    MODDING = 4
+    MULTIPLAYER = 5
+    WATCHING = 6
+    UNKNOWN = 7
+    TESTING = 8
+    SUBMITTING = 9
+    PAUSED = 10
+    LOBBY = 11
+    MULTIPLAYING = 12
+    OSU_DIRECT = 13
 
 
 async def create(
@@ -60,7 +77,7 @@ async def create(
             "latitude": latitude,
             "rank": rank,
             "gamemode": gamemode,
-        }
+        },
     )
 
     assert presence is not None
@@ -78,7 +95,7 @@ async def fetch_by_presence_id(
         """,
         values={
             "presence_id": str(presence_id),
-        }
+        },
     )
 
     return cast(Presence, presence) if presence is not None else None

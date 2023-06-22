@@ -1,18 +1,19 @@
 from typing import TypedDict
 from uuid import UUID, uuid4
-import uvicorn
 
-from fastapi import FastAPI
+import uvicorn
 from fastapi import APIRouter
+from fastapi import FastAPI
 from fastapi import Request
 from fastapi import Response
 
-from app.repositories import presences
-from app.repositories import accounts
+from app import packets, security, settings
 from app.database import database
-from app import packets
-from app import settings
-from app import security
+
+from app.repositories import accounts, presences, stats
+from app.repositories.accounts import Account
+from app.repositories.stats import Stats
+from app.repositories.presences import Presence
 
 
 app = FastAPI()
@@ -29,7 +30,6 @@ app.host("c5.jamestepper.com", bancho_router)
 app.host("c6.jamestepper.com", bancho_router)
 
 
-
 class Login_Data(TypedDict):
     username: str
     password_md5: str
@@ -38,18 +38,6 @@ class Login_Data(TypedDict):
     location: int
     client_hash: str
     block_non_friend_pm: int
-
-class Presence(TypedDict):
-    presence_id: UUID
-    user_id: int
-    username: str
-    timezone: int
-    country: int
-    permission: int
-    longitude: float
-    latitude: float
-    rank: int
-    gamemode: int
 
 
 @app.on_event("startup")
@@ -66,7 +54,9 @@ def parse_login_data(raw_data: bytes):
     data = raw_data.decode()
 
     username, password_md5, remainder = data.split("\n", maxsplit=2)
-    version, timezone, location, client_hash, block_non_friend_pm = remainder.split("|", maxsplit=4)
+    version, timezone, location, client_hash, block_non_friend_pm = remainder.split(
+        "|", maxsplit=4
+    )
 
     login_data: Login_Data = {
         "username": username,
@@ -92,11 +82,11 @@ async def handle_login(request: Request):
 
     assert account is not None
 
-    if not security.check_password(login_data["password_md5"],
-                                   account["password"].encode()):
+    if not security.check_password(
+        login_data["password_md5"], account["password"].encode()
+    ):
         return Response(
-                content=packets.login_reply_packet(-1),
-                headers={"cho-token": "no"}
+            content=packets.login_reply_packet(-1), headers={"cho-token": "no"}
         )
 
     presence: Presence = await presences.create(
@@ -126,19 +116,33 @@ async def handle_login(request: Request):
         gamemode=presence["gamemode"],
     )
 
+    user_stats: Stats = await stats.fetch_one(
+        user_id=presence["user_id"],
+    )
 
-    
+    response_data += packets.user_stats_packet(
+        user_id=presence["user_id"],
+        status=0,
+        ranked_score=user_stats["ranked_score"],
+        accuracy=100.00,
+        play_count=222,
+        total_score=100000,
+        rank=1,
+        performance=100000,
+        status_text=user_stats["status_text"],
+        beatmap_checksum=user_stats["beatmap_checksum"],
+        current_mods=user_stats["current_mods"],
+        play_mode=user_stats["play_mode"],
+        beatmap_id=user_stats["beatmap_id"],
+    )
+
     return Response(
-            content=response_data,
-            headers={"cho-token": str(presence["presence_id"])}
-        )
+        content=response_data, headers={"cho-token": str(presence["presence_id"])}
+    )
 
-    
 
-async def handle_bancho_request(request: Request) -> Response:
+async def handle_bancho_request(request: Request):
     ...
-
-
 
 
 @bancho_router.post("/")

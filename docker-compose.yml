@@ -1,0 +1,14 @@
+version: "3.3"
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - 5432:5432
+  randomize-osu-server:
+    image: randomize-osu-server:latest
+    ports:
+      - 10000:${PORT}
+    # environment:
+      # -
