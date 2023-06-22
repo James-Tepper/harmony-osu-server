@@ -126,7 +126,7 @@ async def handle_login(request: Request):
         ranked_score=user_stats["ranked_score"],
         accuracy=100.00,
         play_count=222,
-        total_score=100000,
+        total_score=1000,
         rank=1,
         performance=100000,
         status_text=user_stats["status_text"],
