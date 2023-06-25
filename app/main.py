@@ -80,7 +80,8 @@ async def handle_login(request: Request):
 
     account = await accounts.fetch_by_username(login_data["username"])
 
-    assert account is not None
+    if account is None:
+        return
 
     if not security.check_password(
         login_data["password_md5"], account["password"].encode()
