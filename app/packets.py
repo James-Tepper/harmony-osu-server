@@ -93,8 +93,11 @@ def write_string(value: str) -> bytes:
     return output
 
 
+def write_protocol_version_packet(version: int) -> bytes:
+    return struct.pack("<HxIi", ServerPackets.PROTOCOL_VERSION, 4, version)
+
+
 def write_login_reply_packet(user_id: int) -> bytes:
-    print("LOGIN REPLY", struct.pack("<HxIi", ServerPackets.USER_ID, 4, user_id))
     return struct.pack("<HxIi", ServerPackets.USER_ID, 4, user_id)
 
 
@@ -117,8 +120,6 @@ def write_user_presence_packet(
     packet_data += struct.pack("<f", longitude)
     packet_data += struct.pack("<f", latitude)
     packet_data += struct.pack("<i", rank)
-    
-    print("USER_PRESENCE", struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data)
 
     return struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data
 
@@ -152,5 +153,6 @@ def write_user_stats_packet(
     packet_data += struct.pack("<i", global_rank)
     packet_data += struct.pack("<h", performance_points)
 
-    print("USER_STATS", struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data)
     return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data
+
+

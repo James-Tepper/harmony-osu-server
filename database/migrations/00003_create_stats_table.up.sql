@@ -1,11 +1,6 @@
 CREATE TABLE stats (
     user_id INT NOT NULL,
     mode INT NOT NULL,
-    action INT NOT NULL,
-    info_text TEXT NOT NULL,
-    beatmap_md5 TEXT NOT NULL,
-    mods INT NOT NULL,
-    beatmap_id INT NOT NULL,
     ranked_score INT NOT NULL,
     accuracy DECIMAL NOT NULL,
     play_count INT NOT NULL,

@@ -101,7 +101,10 @@ async def handle_login(request: Request):
         gamemode=0,
     )
 
-    response_data = packets.write_login_reply_packet(presence["user_id"])
+    response_data = bytearray()
+
+    response_data += packets.write_protocol_version_packet(19)
+    response_data += packets.write_login_reply_packet(presence["user_id"])
 
     response_data += packets.write_user_presence_packet(
         user_id=presence["user_id"],
@@ -114,7 +117,6 @@ async def handle_login(request: Request):
         rank=presence["rank"],
         gamemode=presence["gamemode"],
     )
-    print(len(response_data))
 
     user_stats: Stats = await stats.fetch_one(
         user_id=presence["user_id"],
@@ -136,18 +138,14 @@ async def handle_login(request: Request):
         beatmap_id=user_stats["beatmap_id"],
     )
 
-    print(len(response_data))
 
     login_reply = WriteLoginReply(str(presence["presence_id"]))
-    print(response_data)
     return login_reply.handle_login_reply(response_data)
 
     # return Response(
     #     content=response_data, headers={"cho-token": str(presence["presence_id"])}
     # )
 
-
-import struct
 
 # \x05\x00 H packet id
 # \x00 x skip a byte
