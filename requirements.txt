@@ -1,2 +1,5 @@
+bcrypt
+databases
 fastapi
+python-dotenv
 uvicorn
