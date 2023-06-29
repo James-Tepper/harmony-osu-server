@@ -1,5 +1,7 @@
-import struct
 import math
+import struct
+from enum import IntEnum
+from typing import TypedDict
 from uuid import UUID
 
 # struct.unpack("<I", )
@@ -7,6 +9,7 @@ from uuid import UUID
 # sends user id as I32
 # packet id = 5 (LOGIN REPLY)| length = 4 | user id = 1
 # read case login reply handler for length
+
 
 class ServerPackets:
     USER_ID = 5
@@ -70,44 +73,7 @@ class ServerPackets:
     SWITCH_TOURNAMENT_SERVER = 107
 
 
-class PacketReader:
-    def __init__(self, data: bytes) -> None:
-        self.data_view = memoryview(data)
-
-    def read(self, num_bytes: int) -> bytes:
-        output = self.data_view[:num_bytes]
-        self.data_view = self.data_view[num_bytes:]
-        return output
-    
-    def read_i8(self) -> int:
-        return struct.unpack("<b", self.read(1))[0]
-
-    def read_u8(self) -> int:
-        return struct.unpack("<B", self.read(1))[0]
-
-    def read_i16(self) -> int:
-        return struct.unpack("<h", self.read(2))[0]
-
-    def read_u16(self) -> int:
-        return struct.unpack("<H", self.read(2))[0]
-
-    def read_i32(self) -> int:
-        return struct.unpack("<i", self.read(4))[0]
-
-    def read_u32(self) -> int:
-        return struct.unpack("<I", self.read(4))[0]
-    
-    def read_f32(self) -> float:
-        return struct.unpack("<f", self.read(4))[0]
-
-    def read_i64(self) -> int:
-        return struct.unpack("<q", self.read(8))[0]
-
-    def read_u64(self) -> int:
-        return struct.unpack("<Q", self.read(8))[0]
-    
-    def read_f64(self) -> float:
-        return struct.unpack("<d", self.read(8))[0]
+# class PacketTypes(IntEnum):
 
 
 def write_string(value: str) -> bytes:
@@ -127,7 +93,8 @@ def write_string(value: str) -> bytes:
     return output
 
 
-def login_reply_packet(user_id: int) -> bytes:
+def write_login_reply_packet(user_id: int) -> bytes:
+    print("LOGIN REPLY", struct.pack("<HxIi", ServerPackets.USER_ID, 4, user_id))
     return struct.pack("<HxIi", ServerPackets.USER_ID, 4, user_id)
 
 
@@ -142,10 +109,7 @@ def write_user_presence_packet(
     rank: int,
     gamemode: int,
 ) -> bytes:
-    packet_data = struct.pack(
-        "<i",
-        user_id,
-    )
+    packet_data = struct.pack("<i", user_id)
     packet_data += write_string(username)
     packet_data += struct.pack("<B", timezone + 24)
     packet_data += struct.pack("<B", country)
@@ -153,10 +117,10 @@ def write_user_presence_packet(
     packet_data += struct.pack("<f", longitude)
     packet_data += struct.pack("<f", latitude)
     packet_data += struct.pack("<i", rank)
+    
+    print("USER_PRESENCE", struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data)
 
-    return (
-        struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data
-    )
+    return struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data
 
 
 def write_user_stats_packet(
@@ -174,17 +138,13 @@ def write_user_stats_packet(
     mode: int,
     beatmap_id: int,
 ) -> bytes:
-    packet_data = struct.pack(
-        "<i",
-        user_id,
-    )
+    packet_data = struct.pack("<i", user_id)
     packet_data += struct.pack("<B", action)
     packet_data += write_string(info_text)
     packet_data += write_string(beatmap_md5)
     packet_data += struct.pack("<i", mods)
-    packet_data += struct.pack("<b", mode)
+    packet_data += struct.pack("<B", mode)
     packet_data += struct.pack("<i", beatmap_id)
-
     packet_data += struct.pack("<Q", ranked_score)
     packet_data += struct.pack("<f", (accuracy / 100.0))
     packet_data += struct.pack("<i", play_count)
@@ -192,22 +152,5 @@ def write_user_stats_packet(
     packet_data += struct.pack("<i", global_rank)
     packet_data += struct.pack("<h", performance_points)
 
-    print(packet_data)
-
+    print("USER_STATS", struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data)
     return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data
-
-
-# userId = sr.ReadInt32();
-#
-# action = sr.ReadByte();
-# beatmapChecksum = sr.ReadString();
-# currentMods = sr.ReadInt32();
-# playMode = sr.ReadByte();
-# beatmapId = sr.ReadInt32();
-#
-# rankedScore = sr.ReadInt64();
-# accuracy = sr.ReadSingle();
-# playcount = sr.ReadInt32();
-# totalScore = sr.ReadInt64();
-# rank = sr.ReadInt32();
-# performance = sr.ReadInt16();

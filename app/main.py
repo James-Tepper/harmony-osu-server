@@ -6,7 +6,7 @@ from fastapi import APIRouter, FastAPI, Request, Response
 
 from app import packets, security, settings
 from app.database import database
-from app.login_reply import LoginReply, ReadLoginReply
+from app.login_reply import LoginReply, WriteLoginReply
 from app.repositories import accounts, presences, stats
 from app.repositories.accounts import Account
 from app.repositories.presences import Presence
@@ -69,10 +69,10 @@ def parse_login_data(raw_data: bytes):
 
 # Sorted by login_reply
 async def handle_login(request: Request):
-    print(request.headers)
+    # print(request.headers)
     login_data = parse_login_data(await request.body())
 
-    login_reply = ReadLoginReply()
+    login_reply = WriteLoginReply()
 
     if login_data is None:
         return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
@@ -87,6 +87,7 @@ async def handle_login(request: Request):
     ):
         return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
+    # TODO Implement a way to delete a presence when user logs off
     presence: Presence = await presences.create(
         presence_id=uuid4(),
         user_id=account["user_id"],
@@ -100,7 +101,7 @@ async def handle_login(request: Request):
         gamemode=0,
     )
 
-    response_data = packets.login_reply_packet(account["user_id"])
+    response_data = packets.write_login_reply_packet(presence["user_id"])
 
     response_data += packets.write_user_presence_packet(
         user_id=presence["user_id"],
@@ -113,6 +114,7 @@ async def handle_login(request: Request):
         rank=presence["rank"],
         gamemode=presence["gamemode"],
     )
+    print(len(response_data))
 
     user_stats: Stats = await stats.fetch_one(
         user_id=presence["user_id"],
@@ -134,13 +136,54 @@ async def handle_login(request: Request):
         beatmap_id=user_stats["beatmap_id"],
     )
 
-    login_reply = ReadLoginReply(str(presence["presence_id"]))
+    print(len(response_data))
 
+    login_reply = WriteLoginReply(str(presence["presence_id"]))
+    print(response_data)
     return login_reply.handle_login_reply(response_data)
 
     # return Response(
     #     content=response_data, headers={"cho-token": str(presence["presence_id"])}
     # )
+
+
+import struct
+
+# \x05\x00 H packet id
+# \x00 x skip a byte
+# \x04\x00\x00\x00 I length of data
+# \x01\x00\x00\x00 i data (user id)
+
+# user presence
+# 83, 0, 
+# 0, 
+# 30, 0, 0, 0, 
+# 1, 0, 0, 0, 
+# 11, 9, 82, 97, 110, 100, 111, 109, 105, 122, 101,
+# 25,
+# 1,
+# 16, 
+# 0, 0, 0, 0, 
+# 0, 0, 0, 0, 
+# 1, 0, 0, 0,
+
+# user stats
+# 11, 0,                              H packet_id
+# 0,                                  x skip a byte
+# 57, 0, 0, 0,                        I length of data
+# 1, 0, 0, 0,                         4 user_id 
+# 0,                                  1 action
+# 11, 4, 73, 100, 108, 101,           S info_text                
+# 11, 5, 104, 101, 108, 108, 111,     S beatmap_md5                    
+# 0, 0, 0, 0,                         4 mods
+# 0,                                  1 mode
+# 0, 0, 0, 0,                         4 beatmap_id
+# 16, 39, 0, 0, 0, 0, 0, 0,           8 ranked_score                
+# 0, 0, 128, 63,                      4 accuracy
+# 222, 0, 0, 0,                       4 play_count
+# 232, 3, 0, 0, 0, 0, 0, 0,           8 total_score                
+# 1, 0, 0, 0,                         4 global_rank
+# 16, 39                            2 performance_points
 
 
 async def handle_bancho_request(request: Request):
