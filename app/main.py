@@ -101,7 +101,9 @@ async def handle_login(request: Request):
         gamemode=0,
     )
 
-    response_data = packets.write_login_reply_packet(presence["user_id"])
+    response_data = bytearray()
+    response_data += packets.write_protocol_version_packet(19)
+    response_data += packets.write_login_reply_packet(presence["user_id"])
 
     response_data += packets.write_user_presence_packet(
         user_id=presence["user_id"],

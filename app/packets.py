@@ -154,3 +154,7 @@ def write_user_stats_packet(
 
     print("USER_STATS", struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data)
     return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data
+
+
+def write_protocol_version_packet(version: int) -> bytes:
+    return struct.pack("<HxIi", ServerPackets.PROTOCOL_VERSION, 4, version)
