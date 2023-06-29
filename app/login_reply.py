@@ -17,24 +17,23 @@ class LoginReply:
 
 
 # TODO FIX AND IMPLEMENT PROPERLY
-class ReadLoginReply:
+class WriteLoginReply:
     def __init__(
         self,
-        presence: Union[str, None] = None,
+        presence_id: Union[str, None] = None,
     ) -> None:
-        if presence:
-            self.presence = presence
+        if presence_id:
+            self.presence_id = presence_id
 
     def handle_login_reply(
         self, login_id_or_response_data: Union[int, bytes]
     ) -> Response:
-
         # response data
-        if type(login_id_or_response_data) == bytes:
-            assert self.presence is not None
+        if isinstance(login_id_or_response_data, bytes):
+            assert self.presence_id is not None
             return Response(
                 content=login_id_or_response_data,
-                headers={"cho-token": self.presence},
+                headers={"cho-token": self.presence_id},
             )
 
         # login id
@@ -58,6 +57,6 @@ class ReadLoginReply:
                 message = "Welcome!"
 
         return Response(
-            packets.login_reply_packet(int(login_id_or_response_data)),
+            packets.write_login_reply_packet(int(login_id_or_response_data)),
             headers={"cho-token": message},
         )

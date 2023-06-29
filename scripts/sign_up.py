@@ -51,7 +51,7 @@ async def sign_up():
             play_count=0,
             total_score=0,
             global_rank=1,
-            performance_points=10_000,
+            performance_points=10000,
         )
 
 

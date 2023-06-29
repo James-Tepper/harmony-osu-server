@@ -4,7 +4,7 @@ CREATE TABLE stats (
     action INT NOT NULL,
     info_text TEXT NOT NULL,
     beatmap_md5 TEXT NOT NULL,
-    current_mods INT NOT NULL,
+    mods INT NOT NULL,
     beatmap_id INT NOT NULL,
     ranked_score INT NOT NULL,
     accuracy DECIMAL NOT NULL,
