@@ -1,2 +1,5 @@
+bcrypt
+databases[asyncpg]
 fastapi
+python-dotenv
 uvicorn
