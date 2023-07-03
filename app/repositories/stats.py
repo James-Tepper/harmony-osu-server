@@ -2,34 +2,21 @@ from typing import TypedDict, cast
 
 from app.database import database
 
-# from repositories.presences import Action
-
-
 READ_PARAMS = """\
-        user_id,
-        action,
-        info_text,
-        beatmap_md5,
-        mods,
-        mode,
-        beatmap_id,
-        ranked_score,
-        accuracy,
-        play_count,
-        total_score,
-        global_rank,
-        performance_points
+    user_id,
+    mode,
+    ranked_score,
+    accuracy,
+    play_count,
+    total_score,
+    global_rank,
+    performance_points
 """
 
 
 class Stats(TypedDict):
     user_id: int
-    action: int
-    info_text: str
-    beatmap_md5: str
-    mods: int
     mode: int
-    beatmap_id: int
     ranked_score: int
     accuracy: float
     play_count: int
@@ -40,12 +27,7 @@ class Stats(TypedDict):
 
 async def create(
     user_id: int,
-    action: int,
-    info_text: str,
-    beatmap_md5: str,
-    mods: int,
     mode: int,
-    beatmap_id: int,
     ranked_score: int,
     accuracy: float,
     play_count: int,
@@ -56,18 +38,13 @@ async def create(
     stats = await database.fetch_one(
         query=f"""
             INSERT INTO stats
-            (user_id, action, info_text, beatmap_md5, mods, mode, beatmap_id, ranked_score, accuracy, play_count, total_score, global_rank, performance_points)
-            VALUES (:user_id, :action, :info_text, :beatmap_md5, :mods, :mode, :beatmap_id, :ranked_score, :accuracy, :play_count, :total_score, :global_rank, :performance_points)
+            (user_id, mode, ranked_score, accuracy, play_count, total_score, global_rank, performance_points)
+            VALUES (:user_id, :mode, :ranked_score, :accuracy, :play_count, :total_score, :global_rank, :performance_points)
             RETURNING {READ_PARAMS}
         """,
         values={
             "user_id": user_id,
-            "action": action,
-            "info_text": info_text,
-            "beatmap_md5": beatmap_md5,
-            "mods": mods,
             "mode": mode,
-            "beatmap_id": beatmap_id,
             "ranked_score": ranked_score,
             "accuracy": accuracy,
             "play_count": play_count,

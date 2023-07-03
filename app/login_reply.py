@@ -29,8 +29,8 @@ class WriteLoginReply:
         self, login_id_or_response_data: Union[int, bytes]
     ) -> Response:
         # response data
-        if isinstance(login_id_or_response_data, bytes):
-            assert self.presence_id is not None
+        if isinstance(login_id_or_response_data, bytes) and self.presence_id is not None:
+            bytes(login_id_or_response_data)
             return Response(
                 content=login_id_or_response_data,
                 headers={"cho-token": self.presence_id},
@@ -57,6 +57,6 @@ class WriteLoginReply:
                 message = "Welcome!"
 
         return Response(
-            packets.write_login_reply_packet(int(login_id_or_response_data)),
+            content=packets.write_login_reply_packet(int(login_id_or_response_data)),
             headers={"cho-token": message},
         )

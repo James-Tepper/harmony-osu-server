@@ -6,6 +6,7 @@ from app.database import database
 READ_PARAMS = """\
     user_id,
     username,
+    privileges,
     email,
     password,
     created_at,
@@ -16,6 +17,7 @@ READ_PARAMS = """\
 class Account(TypedDict):
     user_id: int
     username: str
+    privileges: int
     email: str
     password: str
     created_at: datetime
@@ -24,18 +26,20 @@ class Account(TypedDict):
 
 async def create(
     username: str,
+    privileges: int,
     email: str,
     password: str,
 ) -> Account:
     account = await database.fetch_one(
         query=f"""
             INSERT INTO accounts
-            (username, email, password)
-            VALUES (:username, :email :password)
+            (username, privileges, email, password)
+            VALUES (:username, :privileges, :email :password)
             RETURNING {READ_PARAMS}
         """,
         values={
             "username": username,
+            "privileges": privileges,
             "email": email,
             "password": password,
         },

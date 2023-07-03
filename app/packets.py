@@ -106,7 +106,7 @@ def write_user_presence_packet(
     username: str,
     timezone: int,
     country: int,
-    permission: int,
+    privileges: int,
     longitude: float,
     latitude: float,
     rank: int,
@@ -116,7 +116,7 @@ def write_user_presence_packet(
     packet_data += write_string(username)
     packet_data += struct.pack("<B", timezone + 24)
     packet_data += struct.pack("<B", country)
-    packet_data += struct.pack("<B", (permission & 0x1F) | ((gamemode & 0x7) << 5))
+    packet_data += struct.pack("<B", (privileges & 0x1F) | ((gamemode & 0x7) << 5))
     packet_data += struct.pack("<f", longitude)
     packet_data += struct.pack("<f", latitude)
     packet_data += struct.pack("<i", rank)
@@ -147,7 +147,7 @@ def write_user_stats_packet(
     packet_data += struct.pack("<B", mode)
     packet_data += struct.pack("<i", beatmap_id)
     packet_data += struct.pack("<Q", ranked_score)
-    packet_data += struct.pack("<f", (accuracy / 100.0))
+    packet_data += struct.pack("<f", (accuracy / 100))
     packet_data += struct.pack("<i", play_count)
     packet_data += struct.pack("<Q", total_score)
     packet_data += struct.pack("<i", global_rank)

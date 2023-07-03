@@ -5,7 +5,6 @@ CREATE TABLE presences (
     action INT NOT NULL,
     rank INT NOT NULL,
     country INT NOT NULL,
-    permission INT NOT NULL,
     mods INT NOT NULL,
     gamemode INT NOT NULL,
     longitude DECIMAL,
@@ -13,5 +12,5 @@ CREATE TABLE presences (
     timezone INT NOT NULL,
     info_text TEXT NOT NULL,
     beatmap_md5 TEXT NOT NULL,
-    beatmap_id INT NOT NULL,
+    beatmap_id INT NOT NULL
 );

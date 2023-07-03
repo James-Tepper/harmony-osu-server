@@ -6,17 +6,18 @@ from fastapi import APIRouter, FastAPI, Request, Response
 
 from app import packets, security, settings
 from app.database import database
+from app.actions import Action
 from app.login_reply import LoginReply, WriteLoginReply
 from app.repositories import accounts, presences, stats
 from app.repositories.accounts import Account
 from app.repositories.presences import Presence
 from app.repositories.stats import Stats
 
+
 app = FastAPI()
 
 osu_web_router = APIRouter(default_response_class=Response)
 bancho_router = APIRouter(default_response_class=Response)
-
 
 app.host("osu.jamestepper.com", osu_web_router)
 app.host("c.jamestepper.com", bancho_router)
@@ -87,60 +88,63 @@ async def handle_login(request: Request):
         return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
     # TODO Implement a way to delete a presence when user logs off
-    presence: Presence = await presences.create(
+    user_presence: Presence = await presences.create(
         presence_id=uuid4(),
         user_id=account["user_id"],
         username=account["username"],
-        timezone=1,
+        action=Action.IDLE,
+        rank=1,
         country=1,
-        permission=16,
+        mods=0,
+        gamemode=0,
         longitude=0.0,
         latitude=0.0,
-        rank=1,
-        gamemode=0,
+        timezone=0,
+        info_text="Hello",
+        beatmap_md5="test",
+        beatmap_id=10,
     )
 
-    response_data = bytearray()
+    # response_data = bytearray()
 
-    response_data += packets.write_protocol_version_packet(19)
-    response_data += packets.write_login_reply_packet(presence["user_id"])
-
+    response_data = packets.write_protocol_version_packet(19)
+    response_data += packets.write_login_reply_packet(user_presence["user_id"])
     response_data += packets.write_user_presence_packet(
-        user_id=presence["user_id"],
-        username=presence["username"],
-        timezone=presence["timezone"],
-        country=presence["country"],
-        permission=presence["permission"],
-        longitude=presence["longitude"],
-        latitude=presence["latitude"],
-        rank=presence["rank"],
-        gamemode=presence["gamemode"],
+        user_id=user_presence["user_id"],
+        username=user_presence["username"],
+        timezone=user_presence["timezone"],
+        country=user_presence["country"],
+        privileges=account["privileges"],
+        longitude=user_presence["longitude"],
+        latitude=user_presence["latitude"],
+        rank=user_presence["rank"],
+        gamemode=user_presence["gamemode"],
     )
 
     user_stats: Stats = await stats.fetch_one(
-        user_id=presence["user_id"],
+        user_id=user_presence["user_id"],
     )
 
     response_data += packets.write_user_stats_packet(
-        user_id=presence["user_id"],
-        action=0,
+        user_id=user_presence["user_id"],
+        action=Action.IDLE,
         ranked_score=user_stats["ranked_score"],
-        accuracy=100.00,
-        play_count=222,
-        total_score=1000,
-        global_rank=1,
-        performance_points=10000,
-        info_text=user_stats["info_text"],
-        beatmap_md5=user_stats["beatmap_md5"],
-        mods=user_stats["mods"],
+        accuracy=user_stats["accuracy"],
+        play_count=user_stats["play_count"],
+        total_score=user_stats["total_score"],
+        global_rank=user_stats["global_rank"],
+        performance_points=user_stats["performance_points"],
+        info_text=user_presence["info_text"],
+        beatmap_md5=user_presence["beatmap_md5"],
+        mods=user_presence["mods"],
         mode=user_stats["mode"],
-        beatmap_id=user_stats["beatmap_id"],
+        beatmap_id=user_presence["beatmap_id"],
     )
 
     #channels
 
 
-    login_reply = WriteLoginReply(str(presence["presence_id"]))
+    login_reply = WriteLoginReply(str(user_presence["presence_id"]))
     return login_reply.handle_login_reply(response_data)
 
     # return Response(
