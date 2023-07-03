@@ -138,6 +138,8 @@ async def handle_login(request: Request):
         beatmap_id=user_stats["beatmap_id"],
     )
 
+    #channels
+
 
     login_reply = WriteLoginReply(str(presence["presence_id"]))
     return login_reply.handle_login_reply(response_data)
@@ -145,43 +147,6 @@ async def handle_login(request: Request):
     # return Response(
     #     content=response_data, headers={"cho-token": str(presence["presence_id"])}
     # )
-
-
-# \x05\x00 H packet id
-# \x00 x skip a byte
-# \x04\x00\x00\x00 I length of data
-# \x01\x00\x00\x00 i data (user id)
-
-# user presence
-# 83, 0, 
-# 0, 
-# 30, 0, 0, 0, 
-# 1, 0, 0, 0, 
-# 11, 9, 82, 97, 110, 100, 111, 109, 105, 122, 101,
-# 25,
-# 1,
-# 16, 
-# 0, 0, 0, 0, 
-# 0, 0, 0, 0, 
-# 1, 0, 0, 0,
-
-# user stats
-# 11, 0,                              H packet_id
-# 0,                                  x skip a byte
-# 57, 0, 0, 0,                        I length of data
-# 1, 0, 0, 0,                         4 user_id 
-# 0,                                  1 action
-# 11, 4, 73, 100, 108, 101,           S info_text                
-# 11, 5, 104, 101, 108, 108, 111,     S beatmap_md5                    
-# 0, 0, 0, 0,                         4 mods
-# 0,                                  1 mode
-# 0, 0, 0, 0,                         4 beatmap_id
-# 16, 39, 0, 0, 0, 0, 0, 0,           8 ranked_score                
-# 0, 0, 128, 63,                      4 accuracy
-# 222, 0, 0, 0,                       4 play_count
-# 232, 3, 0, 0, 0, 0, 0, 0,           8 total_score                
-# 1, 0, 0, 0,                         4 global_rank
-# 16, 39                            2 performance_points
 
 
 async def handle_bancho_request(request: Request):
