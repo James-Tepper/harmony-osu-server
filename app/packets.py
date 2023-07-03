@@ -1,4 +1,5 @@
 import struct
+import math
 from uuid import UUID
 
 # struct.unpack("<I", )
@@ -69,6 +70,46 @@ class ServerPackets:
     SWITCH_TOURNAMENT_SERVER = 107
 
 
+class PacketReader:
+    def __init__(self, data: bytes) -> None:
+        self.data_view = memoryview(data)
+
+    def read(self, num_bytes: int) -> bytes:
+        output = self.data_view[:num_bytes]
+        self.data_view = self.data_view[num_bytes:]
+        return output
+    
+    def read_i8(self) -> int:
+        return struct.unpack("<b", self.read(1))[0]
+
+    def read_u8(self) -> int:
+        return struct.unpack("<B", self.read(1))[0]
+
+    def read_i16(self) -> int:
+        return struct.unpack("<h", self.read(2))[0]
+
+    def read_u16(self) -> int:
+        return struct.unpack("<H", self.read(2))[0]
+
+    def read_i32(self) -> int:
+        return struct.unpack("<i", self.read(4))[0]
+
+    def read_u32(self) -> int:
+        return struct.unpack("<I", self.read(4))[0]
+    
+    def read_f32(self) -> float:
+        return struct.unpack("<f", self.read(4))[0]
+
+    def read_i64(self) -> int:
+        return struct.unpack("<q", self.read(8))[0]
+
+    def read_u64(self) -> int:
+        return struct.unpack("<Q", self.read(8))[0]
+    
+    def read_f64(self) -> float:
+        return struct.unpack("<d", self.read(8))[0]
+
+
 def write_string(value: str) -> bytes:
     # TODO x0b for multiplayer
     data = value.encode()
@@ -90,7 +131,7 @@ def login_reply_packet(user_id: int) -> bytes:
     return struct.pack("<HxIi", ServerPackets.USER_ID, 4, user_id)
 
 
-def user_presence_packet(
+def write_user_presence_packet(
     user_id: int,
     username: str,
     timezone: int,
@@ -118,43 +159,47 @@ def user_presence_packet(
     )
 
 
-def user_stats_packet(
+def write_user_stats_packet(
     user_id: int,
-    status: int,
+    action: int,
     ranked_score: int,
     accuracy: float,
     play_count: int,
     total_score: int,
-    rank: int,
-    performance: int,
-    status_text: str,
-    beatmap_checksum: str,
-    current_mods: int,
-    play_mode: int,
+    global_rank: int,
+    performance_points: int,
+    info_text: str,
+    beatmap_md5: str,
+    mods: int,
+    mode: int,
     beatmap_id: int,
 ) -> bytes:
     packet_data = struct.pack(
         "<i",
         user_id,
     )
-    packet_data += struct.pack("<B", status)
-    packet_data += write_string(status_text)
-    packet_data += write_string(beatmap_checksum)
-    packet_data += struct.pack("<I", current_mods)
-    packet_data += struct.pack("<B", play_mode)
+    packet_data += struct.pack("<B", action)
+    packet_data += write_string(info_text)
+    packet_data += write_string(beatmap_md5)
+    packet_data += struct.pack("<i", mods)
+    packet_data += struct.pack("<b", mode)
     packet_data += struct.pack("<i", beatmap_id)
 
     packet_data += struct.pack("<Q", ranked_score)
-    packet_data += struct.pack("<f", accuracy)
+    packet_data += struct.pack("<f", (accuracy / 100.0))
     packet_data += struct.pack("<i", play_count)
-    packet_data += struct.pack("<q", total_score)
-    packet_data += struct.pack("<i", rank)
-    packet_data += struct.pack("<i", performance)
+    packet_data += struct.pack("<Q", total_score)
+    packet_data += struct.pack("<i", global_rank)
+    packet_data += struct.pack("<h", performance_points)
+
+    print(packet_data)
+
+    return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data
 
 
 # userId = sr.ReadInt32();
 #
-# status = sr.ReadByte();
+# action = sr.ReadByte();
 # beatmapChecksum = sr.ReadString();
 # currentMods = sr.ReadInt32();
 # playMode = sr.ReadByte();
@@ -166,6 +211,3 @@ def user_stats_packet(
 # totalScore = sr.ReadInt64();
 # rank = sr.ReadInt32();
 # performance = sr.ReadInt16();
-
-
-    return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data

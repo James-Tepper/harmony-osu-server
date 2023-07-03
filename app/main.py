@@ -2,19 +2,15 @@ from typing import TypedDict
 from uuid import UUID, uuid4
 
 import uvicorn
-from fastapi import APIRouter
-from fastapi import FastAPI
-from fastapi import Request
-from fastapi import Response
+from fastapi import APIRouter, FastAPI, Request, Response
 
 from app import packets, security, settings
 from app.database import database
-
+from app.login_reply import LoginReply, ReadLoginReply
 from app.repositories import accounts, presences, stats
 from app.repositories.accounts import Account
-from app.repositories.stats import Stats
 from app.repositories.presences import Presence
-
+from app.repositories.stats import Stats
 
 app = FastAPI()
 
@@ -30,7 +26,7 @@ app.host("c5.jamestepper.com", bancho_router)
 app.host("c6.jamestepper.com", bancho_router)
 
 
-class Login_Data(TypedDict):
+class LoginData(TypedDict):
     username: str
     password_md5: str
     version: str
@@ -58,7 +54,7 @@ def parse_login_data(raw_data: bytes):
         "|", maxsplit=4
     )
 
-    login_data: Login_Data = {
+    login_data: LoginData = {
         "username": username,
         "password_md5": password_md5,
         "version": version,
@@ -71,24 +67,25 @@ def parse_login_data(raw_data: bytes):
     return login_data
 
 
+# Sorted by login_reply
 async def handle_login(request: Request):
-    # print(request.headers)
+    print(request.headers)
     login_data = parse_login_data(await request.body())
 
+    login_reply = ReadLoginReply()
+
     if login_data is None:
-        return
+        return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
     account = await accounts.fetch_by_username(login_data["username"])
 
     if account is None:
-        return
+        return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
     if not security.check_password(
         login_data["password_md5"], account["password"].encode()
     ):
-        return Response(
-            content=packets.login_reply_packet(-1), headers={"cho-token": "no"}
-        )
+        return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
     presence: Presence = await presences.create(
         presence_id=uuid4(),
@@ -105,7 +102,7 @@ async def handle_login(request: Request):
 
     response_data = packets.login_reply_packet(account["user_id"])
 
-    response_data += packets.user_presence_packet(
+    response_data += packets.write_user_presence_packet(
         user_id=presence["user_id"],
         username=presence["username"],
         timezone=presence["timezone"],
@@ -121,25 +118,29 @@ async def handle_login(request: Request):
         user_id=presence["user_id"],
     )
 
-    response_data += packets.user_stats_packet(
+    response_data += packets.write_user_stats_packet(
         user_id=presence["user_id"],
-        status=0,
+        action=0,
         ranked_score=user_stats["ranked_score"],
         accuracy=100.00,
         play_count=222,
         total_score=1000,
-        rank=1,
-        performance=100000,
-        status_text=user_stats["status_text"],
-        beatmap_checksum=user_stats["beatmap_checksum"],
-        current_mods=user_stats["current_mods"],
-        play_mode=user_stats["play_mode"],
+        global_rank=1,
+        performance_points=10000,
+        info_text=user_stats["info_text"],
+        beatmap_md5=user_stats["beatmap_md5"],
+        mods=user_stats["mods"],
+        mode=user_stats["mode"],
         beatmap_id=user_stats["beatmap_id"],
     )
 
-    return Response(
-        content=response_data, headers={"cho-token": str(presence["presence_id"])}
-    )
+    login_reply = ReadLoginReply(str(presence["presence_id"]))
+
+    return login_reply.handle_login_reply(response_data)
+
+    # return Response(
+    #     content=response_data, headers={"cho-token": str(presence["presence_id"])}
+    # )
 
 
 async def handle_bancho_request(request: Request):

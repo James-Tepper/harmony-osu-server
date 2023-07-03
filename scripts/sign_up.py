@@ -17,7 +17,7 @@ async def sign_up():
         password = getpass("Input password: ")
 
         if (
-            not re.match(r"^(?!.*\.\.)(?!.*\.$)[^\W_]{3,20}$", username)
+            not re.match(r"^(?!.*\.\.)(?!.*\.$)[^\W_]{1,20}$", username)
             or not re.match(
                 r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{1,30}$", email
             )
@@ -41,17 +41,17 @@ async def sign_up():
             await stats.create(
             user_id=account["user_id"],
             action=0,
-            status_text="Idle",
-            beatmap_checksum="Hi",
-            current_mods=0,
-            play_mode=getattr(game_mode_instance, mode),
+            info_text="Idle",
+            beatmap_md5="Hi",
+            mods=0,
+            mode=getattr(game_mode_instance, mode),
             beatmap_id=0,
             ranked_score=100_000,
             accuracy=100.00,
             play_count=0,
             total_score=0,
-            rank=1,
-            performance=100_000,
+            global_rank=1,
+            performance_points=10_000,
         )
 
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 """
 RAW SQL
 
-INSERT INTO stats (user_id, action, status_text, beatmap_checksum, current_mods, play_mode, beatmap_id, ranked_score, accuracy, play_count, total_score, rank, performance)
+INSERT INTO stats (user_id, action, info_text, beatmap_md5, current_mods, mode, beatmap_id, ranked_score, accuracy, play_count, total_score, rank, performance)
 VALUES (1, 0, 'Idle', 'Hi', 0, 0, 0, 100000, 100.00, 0, 0, 1, 100000);
 
 
