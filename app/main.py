@@ -69,7 +69,6 @@ def parse_login_data(raw_data: bytes):
 
 # Sorted by login_reply
 async def handle_login(request: Request):
-    # print(request.headers)
     login_data = parse_login_data(await request.body())
 
     login_reply = WriteLoginReply()
