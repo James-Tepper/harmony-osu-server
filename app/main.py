@@ -5,14 +5,15 @@ import uvicorn
 from fastapi import APIRouter, FastAPI, Request, Response
 
 from app import packets, security, settings
-from app.database import database
 from app.actions import Action
+from app.database import database
+from app.gamemodes import GameMode
 from app.login_reply import LoginReply, WriteLoginReply
-from app.repositories import accounts, presences, stats
+from app.repositories import accounts, presences, stats, channels
 from app.repositories.accounts import Account
 from app.repositories.presences import Presence
 from app.repositories.stats import Stats
-
+from app.repositories.channels import Channels
 
 app = FastAPI()
 
@@ -27,16 +28,6 @@ app.host("c5.jamestepper.com", bancho_router)
 app.host("c6.jamestepper.com", bancho_router)
 
 
-class LoginData(TypedDict):
-    username: str
-    password_md5: str
-    version: str
-    timezone: int
-    location: int
-    client_hash: str
-    block_non_friend_pm: int
-
-
 @app.on_event("startup")
 async def on_startup():
     await database.connect()
@@ -47,7 +38,17 @@ async def on_shutdown():
     await database.disconnect()
 
 
-def parse_login_data(raw_data: bytes):
+class LoginData(TypedDict):
+    username: str
+    password_md5: str
+    version: str
+    timezone: int
+    location: int
+    client_hash: str
+    block_non_friend_pm: int
+
+
+def parse_login_data(raw_data: bytes) -> LoginData:
     data = raw_data.decode()
 
     username, password_md5, remainder = data.split("\n", maxsplit=2)
@@ -87,6 +88,8 @@ async def handle_login(request: Request):
     ):
         return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
+    vanilla_game_mode = GameMode.VN_OSU
+
     # TODO Implement a way to delete a presence when user logs off
     user_presence: Presence = await presences.create(
         presence_id=uuid4(),
@@ -96,18 +99,17 @@ async def handle_login(request: Request):
         rank=1,
         country=1,
         mods=0,
-        gamemode=0,
+        gamemode=vanilla_game_mode,
         longitude=0.0,
         latitude=0.0,
         timezone=0,
-        info_text="Hello",
-        beatmap_md5="test",
+        info_text="",
+        beatmap_md5="",
         beatmap_id=10,
     )
 
-    # response_data = bytearray()
-
     response_data = packets.write_protocol_version_packet(19)
+
     response_data += packets.write_login_reply_packet(user_presence["user_id"])
     response_data += packets.write_user_presence_packet(
         user_id=user_presence["user_id"],
@@ -141,8 +143,8 @@ async def handle_login(request: Request):
         beatmap_id=user_presence["beatmap_id"],
     )
 
-    #channels
-
+    # channels
+    # chat_channel = await channel_members.add_member
 
     login_reply = WriteLoginReply(str(user_presence["presence_id"]))
     return login_reply.handle_login_reply(response_data)

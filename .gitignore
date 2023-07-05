@@ -4,7 +4,8 @@ __pycache__/
 pgdata/
 venv/
 nginx.conf
-notes.md
 .pre-commit-config.yml
+notes.md
 osu-website
+sql.md
 # TODO IMPLEMENT WEBSITE

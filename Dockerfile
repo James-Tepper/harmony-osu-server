@@ -1,9 +1,19 @@
 FROM python:3.11
-WORKDIR /app
-COPY . .
+
+ENV PYTHONBUFFERED=1
+
+COPY requirements.txt .
 RUN pip install -r requirements.txt
-CMD ["python", "app/main.py"]
-RUN apt update && apt install postgresql
+
+RUN apt update && \
+    apt install -y postgresql-client
+
+
+COPY scripts /scripts
+RUN chmod u+x /scripts/*
+
+COPY . /srv/root
+WORKDIR /srv/root
 
 EXPOSE 80
 

@@ -1,4 +1,4 @@
-from typing import TypedDict, cast
+from typing import TypedDict, cast, Any
 from uuid import UUID
 
 from app.database import database
@@ -98,3 +98,44 @@ async def fetch_one(
     )
 
     return cast(Presence, presence) if presence is not None else None
+
+
+async def partial_update(
+    presence_id: UUID,
+    action: int | None = None,
+    rank: int | None = None,
+    mods: int | None = None,
+    gamemode: int | None = None,
+    info_text: str | None = None,
+    beatmap_md5: str | None = None,
+    beatmap_id: int | None = None,
+) -> Presence | None:
+
+    sql_values={
+    "presence_id": str(presence_id),
+    "action": action,
+    "rank": rank,
+    "mods": mods,
+    "gamemode": gamemode,
+    "info_text": info_text,
+    "beatmap_md5": beatmap_md5,
+    "beatmap_id": beatmap_id,
+    }
+
+    sql_query = ""
+    filtered_sql_values = {}
+    for key, value in sql_values.items():
+        if not value == None:
+            filtered_sql_values.update({key: value})
+
+
+    presence = await database.fetch_one(
+        query=f"""
+            UPDATE presences
+            WHERE presence_id = :presence_id
+            RETURNING {READ_PARAMS}
+        """,
+        values=filtered_sql_values
+    )
+    return cast(Presence, presence) if presence is not None else None
+

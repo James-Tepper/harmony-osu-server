@@ -1,14 +1,9 @@
 import math
 import struct
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import TypedDict
 from uuid import UUID
-
-# struct.unpack("<I", )
-
-# sends user id as I32
-# packet id = 5 (LOGIN REPLY)| length = 4 | user id = 1
-# read case login reply handler for length
 
 
 class ServerPackets:
@@ -73,7 +68,42 @@ class ServerPackets:
     SWITCH_TOURNAMENT_SERVER = 107
 
 
-# class PacketTypes(IntEnum):
+@dataclass
+class Packet:
+    packet_id: int
+    packet_length: int
+    packet_data: bytes
+
+
+class PacketReader:
+    def __init__(self, data: bytes) -> None:
+        self.data_view = memoryview(data)
+
+    def read(self, num_bytes: int) -> bytes:
+        data = self.data_view[:num_bytes]
+        self.data_view = self.data_view[num_bytes:]
+        return bytes(data)
+
+    def read_i8(self):
+        return struct.unpack("<b", self.read(1))[0]
+    def read_u8(self):
+        return struct.unpack("<B", self.read(1))[0]
+    def read_i16(self):
+        return struct.unpack("<h", self.read(2))[0]
+    def read_u16(self):
+        return struct.unpack("<H", self.read(2))[0]
+    def read_i32(self):
+        return struct.unpack("<i", self.read(4))[0]
+    def read_u32(self):
+        return struct.unpack("<I", self.read(4))[0]
+    def read_i64(self):
+        return struct.unpack("<q", self.read(4))[0]
+    def read_u64(self):
+        return struct.unpack("<Q", self.read(4))[0]
+    def read_f32(self):
+        return struct.unpack("<f", self.read(4))[0]
+    def read_f64(self):
+        return struct.unpack("<d", self.read(4))[0]
 
 
 def write_string(value: str) -> bytes:
@@ -114,7 +144,7 @@ def write_user_presence_packet(
 ) -> bytes:
     packet_data = struct.pack("<i", user_id)
     packet_data += write_string(username)
-    packet_data += struct.pack("<B", timezone + 24)
+    packet_data += struct.pack("<B", (timezone + 24))
     packet_data += struct.pack("<B", country)
     packet_data += struct.pack("<B", (privileges & 0x1F) | ((gamemode & 0x7) << 5))
     packet_data += struct.pack("<f", longitude)
