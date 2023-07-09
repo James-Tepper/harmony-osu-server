@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TypedDict, cast
 
-from app.database import database
+from app import clients
 
 READ_PARAMS = """\
     name,
@@ -36,7 +36,7 @@ async def create(
     created_at: datetime,
     updated_at: datetime,
 ) -> Channels:
-    channel = await database.fetch_one(
+    channel = await clients.database.fetch_one(
         query=f"""
             INSERT INTO channels
             (name, topic, read_privileges, write_privileges, auto_join, temporary, created_at, updated_at)
@@ -59,7 +59,7 @@ async def create(
 
 
 async def fetch_one(name: str) -> Channels | None:
-    channel = await database.fetch_one(
+    channel = await clients.database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS} 
             FROM stats

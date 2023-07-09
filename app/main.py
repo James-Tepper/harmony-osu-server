@@ -5,11 +5,11 @@ import uvicorn
 from fastapi import APIRouter, FastAPI, Request, Response
 
 from app import packets, security, settings
+from app import lifecycle
 from app.actions import Action
-from app.database import database
 from app.gamemodes import GameMode
 from app.login_reply import LoginReply, WriteLoginReply
-from app.repositories import accounts, presences, stats, channels
+from app.repositories import accounts, presences, stats, channels, channel_members
 from app.repositories.accounts import Account
 from app.repositories.presences import Presence
 from app.repositories.stats import Stats
@@ -29,13 +29,13 @@ app.host("c6.jamestepper.com", bancho_router)
 
 
 @app.on_event("startup")
-async def on_startup():
-    await database.connect()
+async def startup():
+    await lifecycle.start()
 
 
 @app.on_event("shutdown")
-async def on_shutdown():
-    await database.disconnect()
+async def shutdown():
+    await lifecycle.shutdown()
 
 
 class LoginData(TypedDict):
@@ -142,9 +142,6 @@ async def handle_login(request: Request):
         mode=user_stats["mode"],
         beatmap_id=user_presence["beatmap_id"],
     )
-
-    # channels
-    # chat_channel = await channel_members.add_member
 
     login_reply = WriteLoginReply(str(user_presence["presence_id"]))
     return login_reply.handle_login_reply(response_data)

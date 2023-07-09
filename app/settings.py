@@ -14,4 +14,11 @@ DB_USER = os.environ["DB_USER"]
 DB_PASS = os.environ["DB_PASS"]
 DB_NAME = os.environ["DB_NAME"]
 
+REDIS_SCHEME = os.environ["REDIS_SCHEME"]
+REDIS_USER = os.environ["REDIS_USER"]
+REDIS_PASS = os.environ["REDIS_PASS"]
+REDIS_HOST = os.environ["REDIS_HOST"]
+REDIS_PORT = int(os.environ["REDIS_PORT"])
+REDIS_DB = int(os.environ["REDIS_DB"])
+
 PORT = int(os.environ["PORT"])
