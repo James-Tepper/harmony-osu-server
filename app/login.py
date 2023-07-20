@@ -1,4 +1,4 @@
-from typing import Union
+from typing import TypedDict, Union
 
 from fastapi import Response
 
@@ -16,6 +16,16 @@ class LoginReply:
     REQUIRE_VERIFICATION = -8
 
 
+class LoginData(TypedDict):
+    username: str
+    password_md5: str
+    version: str
+    timezone: int
+    location: int
+    client_hash: str
+    block_non_friend_pm: int
+
+
 # TODO FIX AND IMPLEMENT PROPERLY
 class WriteLoginReply:
     def __init__(
@@ -29,7 +39,10 @@ class WriteLoginReply:
         self, login_id_or_response_data: Union[int, bytes]
     ) -> Response:
         # response data
-        if isinstance(login_id_or_response_data, bytes) and self.presence_id is not None:
+        if (
+            isinstance(login_id_or_response_data, bytes)
+            and self.presence_id is not None
+        ):
             bytes(login_id_or_response_data)
             return Response(
                 content=login_id_or_response_data,
@@ -60,3 +73,24 @@ class WriteLoginReply:
             content=packets.write_login_reply_packet(int(login_id_or_response_data)),
             headers={"cho-token": message},
         )
+
+
+def parse_login_data(raw_data: bytes) -> LoginData:
+    data = raw_data.decode()
+
+    username, password_md5, remainder = data.split("\n", maxsplit=2)
+    version, timezone, location, client_hash, block_non_friend_pm = remainder.split(
+        "|", maxsplit=4
+    )
+
+    login_data: LoginData = {
+        "username": username,
+        "password_md5": password_md5,
+        "version": version,
+        "timezone": int(timezone),
+        "location": int(location),
+        "client_hash": client_hash,
+        "block_non_friend_pm": int(block_non_friend_pm),
+    }
+
+    return login_data
