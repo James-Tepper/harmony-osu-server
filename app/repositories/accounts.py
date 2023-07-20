@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TypedDict, cast
 
-from app.database import database
+from app import clients
 
 READ_PARAMS = """\
     user_id,
@@ -30,7 +30,7 @@ async def create(
     email: str,
     password: str,
 ) -> Account:
-    account = await database.fetch_one(
+    account = await clients.database.fetch_one(
         query=f"""
             INSERT INTO accounts
             (username, privileges, email, password)
@@ -49,7 +49,7 @@ async def create(
 
 
 async def fetch_by_username(username: str) -> Account | None:
-    account = await database.fetch_one(
+    account = await clients.database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
             FROM accounts
@@ -63,12 +63,11 @@ async def fetch_by_username(username: str) -> Account | None:
 
 
 async def fetch_by_id(user_id: int) -> Account | None:
-    account = await database.fetch_one(
+    account = await clients.database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
             FROM accounts
             WHERE user_id = :user_id
-        
         """,
         values={
             "user_id": user_id,
@@ -82,15 +81,18 @@ async def fetch_many(
     page: int = 1,
     page_size: int = 50,
 ) -> list[Account]:
-    accounts = database.fetch_all(
+
+    privileges_query = "WHERE privileges = :privileges"
+
+    accounts = clients.database.fetch_all(
         query=f"""
             SELECT {READ_PARAMS} FROM accounts
-            WHERE privileges = :privileges
+            {privileges_query if privileges is not None else None}
             LIMIT :limit
             OFFSET :offset
             """,
         values={
-            "privileges": privileges,
+            f"'privileges': {privileges}," if privileges is not None else ""
             "limit": page_size,
             "offset": (page - 1) * page_size,
         },

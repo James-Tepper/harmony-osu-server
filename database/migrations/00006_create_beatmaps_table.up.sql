@@ -1,0 +1,20 @@
+CREATE TABLE beatmaps (
+    beatmap_id INT NOT NULL,
+    beatmap_set_id INT NOT NULL,
+    beatmap_md5 TEXT NOT NULL,
+    ranked_status INT NOT NULL,
+    artist TEXT NOT NULL,
+    title TEXT NOT NULL,
+    creator TEXT NOT NULL,
+    total_length INT NOT NULL,
+    max_combo INT NOT NULL,
+    plays INT DEFAULT 0 NOT NULL,
+    passes INT DEFAULT 0 NOT NULL,
+    mode INT DEFAULT 0 NOT NULL,
+    bpm DECIMAL DEFAULT 0.00 NOT NULL,
+    cs DECIMAL DEFAULT 0.00 NOT NULL,
+    ar DECIMAL DEFAULT 0.00 NOT NULL,
+    od DECIMAL DEFAULT 0.00 NOT NULL,
+    hp DECIMAL DEFAULT 0.00 NOT NULL,
+    star_rating DECIMAL NOT NULL DEFAULT 0.000
+);

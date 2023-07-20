@@ -1,6 +1,6 @@
 from typing import TypedDict, cast
 
-from app.database import database
+from app import clients
 
 READ_PARAMS = """\
     user_id,
@@ -35,7 +35,7 @@ async def create(
     global_rank: int,
     performance_points: int,
 ) -> Stats:
-    stats = await database.fetch_one(
+    stats = await clients.database.fetch_one(
         query=f"""
             INSERT INTO stats
             (user_id, mode, ranked_score, accuracy, play_count, total_score, global_rank, performance_points)
@@ -61,7 +61,7 @@ async def create(
 async def fetch_one(
     user_id: int,
 ):
-    stats = await database.fetch_one(
+    stats = await clients.database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
             FROM stats 

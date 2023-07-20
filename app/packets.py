@@ -68,6 +68,19 @@ class ServerPackets:
     SWITCH_TOURNAMENT_SERVER = 107
 
 
+class DataTypes:
+    I8 = "<b"
+    U8 = "<B"
+    I16 = "<h"
+    U16 = "<H"
+    I32 = "<i"
+    U32 = "<I"
+    I64 = "<q"
+    U64 = "<Q"
+    F32 = "<f"
+    F64 = "<d"
+
+
 @dataclass
 class Packet:
     packet_id: int
@@ -86,24 +99,37 @@ class PacketReader:
 
     def read_i8(self):
         return struct.unpack("<b", self.read(1))[0]
+
     def read_u8(self):
         return struct.unpack("<B", self.read(1))[0]
+
     def read_i16(self):
         return struct.unpack("<h", self.read(2))[0]
+
     def read_u16(self):
         return struct.unpack("<H", self.read(2))[0]
+
     def read_i32(self):
         return struct.unpack("<i", self.read(4))[0]
+
     def read_u32(self):
         return struct.unpack("<I", self.read(4))[0]
+
     def read_i64(self):
         return struct.unpack("<q", self.read(4))[0]
+
     def read_u64(self):
         return struct.unpack("<Q", self.read(4))[0]
+
     def read_f32(self):
         return struct.unpack("<f", self.read(4))[0]
+
     def read_f64(self):
         return struct.unpack("<d", self.read(4))[0]
+
+
+def write_packet(datatype, value):
+    return struct.pack(datatype, value)
 
 
 def write_string(value: str) -> bytes:
@@ -142,16 +168,20 @@ def write_user_presence_packet(
     rank: int,
     gamemode: int,
 ) -> bytes:
-    packet_data = struct.pack("<i", user_id)
+    packet_data = write_packet(DataTypes.I32, user_id)
     packet_data += write_string(username)
-    packet_data += struct.pack("<B", (timezone + 24))
-    packet_data += struct.pack("<B", country)
-    packet_data += struct.pack("<B", (privileges & 0x1F) | ((gamemode & 0x7) << 5))
-    packet_data += struct.pack("<f", longitude)
-    packet_data += struct.pack("<f", latitude)
-    packet_data += struct.pack("<i", rank)
+    packet_data += write_packet(DataTypes.U8, (timezone + 24))
+    packet_data += write_packet(DataTypes.U8, country)
+    packet_data += write_packet(
+        DataTypes.U8, (privileges & 0x1F) | ((gamemode & 0x7) << 5)
+    )
+    packet_data += write_packet(DataTypes.F32, longitude)
+    packet_data += write_packet(DataTypes.F32, latitude)
+    packet_data += write_packet(DataTypes.I32, rank)
 
-    return struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data
+    return (
+        struct.pack("<HxI", ServerPackets.USER_PRESENCE, len(packet_data)) + packet_data
+    )
 
 
 def write_user_stats_packet(
@@ -169,20 +199,18 @@ def write_user_stats_packet(
     mode: int,
     beatmap_id: int,
 ) -> bytes:
-    packet_data = struct.pack("<i", user_id)
-    packet_data += struct.pack("<B", action)
+    packet_data = write_packet(DataTypes.I32, user_id)
+    packet_data += write_packet(DataTypes.U8, action)
     packet_data += write_string(info_text)
     packet_data += write_string(beatmap_md5)
-    packet_data += struct.pack("<i", mods)
-    packet_data += struct.pack("<B", mode)
-    packet_data += struct.pack("<i", beatmap_id)
-    packet_data += struct.pack("<Q", ranked_score)
-    packet_data += struct.pack("<f", (accuracy / 100))
-    packet_data += struct.pack("<i", play_count)
-    packet_data += struct.pack("<Q", total_score)
-    packet_data += struct.pack("<i", global_rank)
-    packet_data += struct.pack("<h", performance_points)
+    packet_data += write_packet(DataTypes.I32, mods)
+    packet_data += write_packet(DataTypes.U8, mode)
+    packet_data += write_packet(DataTypes.I32, beatmap_id)
+    packet_data += write_packet(DataTypes.U64, ranked_score)
+    packet_data += write_packet(DataTypes.F32, (accuracy / 100))
+    packet_data += write_packet(DataTypes.I32, play_count)
+    packet_data += write_packet(DataTypes.U64, total_score)
+    packet_data += write_packet(DataTypes.I32, global_rank)
+    packet_data += write_packet(DataTypes.I16, performance_points)
 
     return struct.pack("<HxI", ServerPackets.USER_STATS, len(packet_data)) + packet_data
-
-

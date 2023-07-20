@@ -1,7 +1,7 @@
-from typing import TypedDict, cast, Any
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
-from app.database import database
+from app import clients
 
 READ_PARAMS = """\
     presence_id,
@@ -54,7 +54,7 @@ async def create(
     beatmap_md5: str,
     beatmap_id: int,
 ) -> Presence:
-    presence = await database.fetch_one(
+    presence = await clients.database.fetch_one(
         query=f"""
             INSERT INTO presences
             (presence_id, user_id, username, action, rank, country, mods, gamemode, longitude, latitude, timezone, info_text, beatmap_md5, beatmap_id)
@@ -86,7 +86,7 @@ async def create(
 async def fetch_one(
     presence_id: UUID,
 ) -> Presence | None:
-    presence = await database.fetch_one(
+    presence = await clients.database.fetch_one(
         query=f"""
             SELECT {READ_PARAMS}
             FROM presences
@@ -110,32 +110,49 @@ async def partial_update(
     beatmap_md5: str | None = None,
     beatmap_id: int | None = None,
 ) -> Presence | None:
-
-    sql_values={
-    "presence_id": str(presence_id),
-    "action": action,
-    "rank": rank,
-    "mods": mods,
-    "gamemode": gamemode,
-    "info_text": info_text,
-    "beatmap_md5": beatmap_md5,
-    "beatmap_id": beatmap_id,
+    sql_values = {
+        "presence_id": str(presence_id),
+        "action": action,
+        "rank": rank,
+        "mods": mods,
+        "gamemode": gamemode,
+        "info_text": info_text,
+        "beatmap_md5": beatmap_md5,
+        "beatmap_id": beatmap_id,
     }
 
-    sql_query = ""
     filtered_sql_values = {}
     for key, value in sql_values.items():
-        if not value == None:
+        if value is not None:
             filtered_sql_values.update({key: value})
 
+    set_query = "SET"
+    for key, value in filtered_sql_values.items():
+        set_query += f" {key} = :{key},"
 
-    presence = await database.fetch_one(
+    set_query = set_query[:-1]
+
+    presence = await clients.database.fetch_one(
         query=f"""
             UPDATE presences
+            {set_query}
             WHERE presence_id = :presence_id
             RETURNING {READ_PARAMS}
         """,
-        values=filtered_sql_values
+        values=filtered_sql_values,
     )
     return cast(Presence, presence) if presence is not None else None
 
+
+async def delete(presence_id: UUID) -> Presence | None:
+    presence = await clients.database.fetch_one(
+        query=f"""
+            DELETE FROM presences
+            WHERE presence_id = :presence_id
+            RETURNING {READ_PARAMS}
+        """,
+        values={
+            "presence_id": str(presence_id)
+        },
+    )
+    return cast(Presence, presence) if presence is not None else None

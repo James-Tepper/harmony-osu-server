@@ -5,7 +5,7 @@ CREATE TABLE stats (
     accuracy DECIMAL NOT NULL,
     play_count INT NOT NULL,
     total_score INT NOT NULL,
-    global_rank INT NOT NULL,
+    global_rank INT NULL,
     performance_points INT NOT NULL,
     PRIMARY KEY (user_id, mode)
 );

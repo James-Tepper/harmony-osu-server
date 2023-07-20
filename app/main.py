@@ -4,16 +4,16 @@ from uuid import UUID, uuid4
 import uvicorn
 from fastapi import APIRouter, FastAPI, Request, Response
 
-from app import packets, security, settings
+from app import lifecycle, login, packets, security, settings
 from app.actions import Action
-from app.database import database
 from app.gamemodes import GameMode
-from app.login_reply import LoginReply, WriteLoginReply
-from app.repositories import accounts, presences, stats, channels
+from app.repositories import rankings
+from app.login import LoginData, LoginReply, WriteLoginReply
+from app.repositories import accounts, channel_members, channels, presences, stats
 from app.repositories.accounts import Account
+from app.repositories.channels import Channels
 from app.repositories.presences import Presence
 from app.repositories.stats import Stats
-from app.repositories.channels import Channels
 
 app = FastAPI()
 
@@ -29,49 +29,18 @@ app.host("c6.jamestepper.com", bancho_router)
 
 
 @app.on_event("startup")
-async def on_startup():
-    await database.connect()
+async def startup():
+    await lifecycle.start()
 
 
 @app.on_event("shutdown")
-async def on_shutdown():
-    await database.disconnect()
-
-
-class LoginData(TypedDict):
-    username: str
-    password_md5: str
-    version: str
-    timezone: int
-    location: int
-    client_hash: str
-    block_non_friend_pm: int
-
-
-def parse_login_data(raw_data: bytes) -> LoginData:
-    data = raw_data.decode()
-
-    username, password_md5, remainder = data.split("\n", maxsplit=2)
-    version, timezone, location, client_hash, block_non_friend_pm = remainder.split(
-        "|", maxsplit=4
-    )
-
-    login_data: LoginData = {
-        "username": username,
-        "password_md5": password_md5,
-        "version": version,
-        "timezone": int(timezone),
-        "location": int(location),
-        "client_hash": client_hash,
-        "block_non_friend_pm": int(block_non_friend_pm),
-    }
-
-    return login_data
+async def shutdown():
+    await lifecycle.shutdown()
 
 
 # Sorted by login_reply
 async def handle_login(request: Request):
-    login_data = parse_login_data(await request.body())
+    login_data: LoginData = login.parse_login_data(await request.body())
 
     login_reply = WriteLoginReply()
 
@@ -88,6 +57,7 @@ async def handle_login(request: Request):
     ):
         return login_reply.handle_login_reply(LoginReply.AUTHENTICATION_FAILED)
 
+    default_action = Action.IDLE
     vanilla_game_mode = GameMode.VN_OSU
 
     # TODO Implement a way to delete a presence when user logs off
@@ -95,7 +65,7 @@ async def handle_login(request: Request):
         presence_id=uuid4(),
         user_id=account["user_id"],
         username=account["username"],
-        action=Action.IDLE,
+        action=default_action,
         rank=1,
         country=1,
         mods=0,
@@ -135,7 +105,7 @@ async def handle_login(request: Request):
         play_count=user_stats["play_count"],
         total_score=user_stats["total_score"],
         global_rank=user_stats["global_rank"],
-        performance_points=user_stats["performance_points"],
+        performance_points=await rankings.calculate_performance_points(user_presence["user_id"], user_stats["mode"]),
         info_text=user_presence["info_text"],
         beatmap_md5=user_presence["beatmap_md5"],
         mods=user_presence["mods"],
@@ -143,15 +113,8 @@ async def handle_login(request: Request):
         beatmap_id=user_presence["beatmap_id"],
     )
 
-    # channels
-    # chat_channel = await channel_members.add_member
-
     login_reply = WriteLoginReply(str(user_presence["presence_id"]))
     return login_reply.handle_login_reply(response_data)
-
-    # return Response(
-    #     content=response_data, headers={"cho-token": str(presence["presence_id"])}
-    # )
 
 
 async def handle_bancho_request(request: Request):
